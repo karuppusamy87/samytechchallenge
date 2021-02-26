@@ -1,0 +1,47 @@
+version: "3"
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+  techchallengedb:
+    image: 'postgres:13.1-alpine'
+    container_name: techchallengedb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=changeme
+      - POSTGRES_DB=app
+  createschema:
+    image: 'techchallengegolang:latest'
+    build:
+      context: .
+    command: updatedb
+    container_name: createschema
+    depends_on:
+      - techchallengedb
+    environment:
+      - VTT_DBUSER=postgres
+      - VTT_DBPASSWORD=changeme
+      - VTT_DBNAME=app
+      - VTT_DBPORT=5432
+      - VTT_DBHOST=techchallengedb
+      - VTT_LISTENHOST=0.0.0.0 
+      - VTT_LISTENPORT=3000
+  golangapplication:
+    image: 'techchallengegolang:latest'
+    build:
+      context: .
+    command: serve
+    container_name: golangapplication
+    depends_on:
+      - createschema
+    environment:
+      - VTT_DBUSER=postgres
+      - VTT_DBPASSWORD=changeme
+      - VTT_DBNAME=app
+      - VTT_DBPORT=5432
+      - VTT_DBHOST=techchallengedb
+      - VTT_LISTENHOST=0.0.0.0 
+      - VTT_LISTENPORT=3000
+    ports:
+      - "3000:3000"
